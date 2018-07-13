@@ -7,16 +7,15 @@ class Tokenizer(object):
     periods in the middle. For instance, bob and 376 and 98.6 and 192.160.0.1
     are all tokens. 123,456 and aunt"s are not tokens 
     """
-    __text = ""
     __stemmer = None
     __stopwords = []
 
     __pattern = r"\w+(\.?\w+)*"
 
-    def tokenize(self):
+    def tokenize(self, text):
         # Lower case all the body
-        tokens = self.__text.lower()
-        tokens = [ match.group() for match in re.finditer(self.__pattern, self.__text, re.M | re.I) ]
+        tokens = text.lower()
+        tokens = [ match.group() for match in re.finditer(self.__pattern, text, re.M | re.I) ]
 
         # Give ID to the word and remove stopwords
         tokens = [ token for token in tokens if token not in self.__stopwords ]
@@ -28,7 +27,7 @@ class Tokenizer(object):
         return tokens
 
 
-    def __init__(self, text, stopwords_path = None, stemmer = None):
+    def __init__(self, stopwords_path = None, stemmer = None):
         # If stopwords is defined
         if stopwords_path:
             try:
@@ -42,5 +41,3 @@ class Tokenizer(object):
             self.__stemmer = Stemmer(stemmer)
             if self.__stemmer.method == None:
                 raise KeyError("Stemming method not found")
-
-        self.__text = text
