@@ -1,42 +1,60 @@
+from engine.catalog_writer import CatalogWriter
 from engine.tokenizer import Tokenizer
-import os
-import re
+from utils.text import gather_documents 
+from utils.config import Config
+from utils.serializer import Serializer
+import multiprocessing
 
 
-def find_docs_by_regex(text):
-    doc_regex = re.compile("<DOC>.*?</DOC>", re.DOTALL)
-    result = re.findall(doc_regex, text)
-    return result
+config = Config("./settings.yml")
+output_dir = config.get("output_dir")
+serializer = Serializer(output_dir)
+data_dir = config.get("data_dir")
 
-def find_doc_no_by_regex(text):
-    docno_regex = re.compile("<DOCNO>.*?</DOCNO>")
-    result = re.findall(docno_regex, text)[0] \
-                    .replace("<DOCNO>", "") \
-                    .replace("</DOCNO>", "") \
-                    .strip()
-    return result
 
-def find_all_texts_by_regex(text):
-    text_regex = re.compile("<TEXT>.*?</TEXT>", re.DOTALL)
-    result = "".join(re.findall(text_regex, text)) \
-            .replace("<TEXT>", "")  \
-            .replace("</TEXT>", "") \
-            .replace("\n", " ")
-    return result
+def merge_tokenized_data(tokenized_data):
+    merged_dict = {}
+    for data in tokenized_data:
+        docid = data["doc_id"]
+        for token, tokdata in data["tokens"].items():
+            e = (docid, tokdata["tf"], tokdata["positions"])
+            if token in merged_dict:
+                merged_dict[token].append(e)
+            else:
+                merged_dict[token] = [e]
+    return merged_dict
 
-for f in os.listdir('./AP_DATA/ap89_collection'):
-    if f.startswith('ap'):
-        with open('./AP_DATA/ap89_collection/' + f, 'r') as d:
-            d = d.read()
-            docs = find_docs_by_regex(d)
+def tokenize_in_batch(docs, counter):
+    print "Worker {0} is running.".format(counter)
+    tokenizer = Tokenizer('./AP_DATA/stoplist.txt', 'PorterStemmer')
+    tokenized_data = [tokenizer.tokenize(doc_id, text) for (doc_id, text) in docs]
+    index = merge_tokenized_data(tokenized_data)
+    serializer.marshall_to_temp_objects(index, "temp.{0}.p".format(counter))
+    print "Worker {0} is done.".format(counter)
 
-            print "Processing {0}, with {1} docs".format(f, len(docs)) 
 
-            for doc in docs:
-                doc_id = find_doc_no_by_regex(doc)
-                text = find_all_texts_by_regex(doc)
-                text = text.strip()
+def run_workers(documents, steps = 1000):
+    workers = []
+    n_workers = len(documents) / steps
+    for i in range(n_workers):
+        t = multiprocessing.Process(target = tokenize_in_batch
+                , args = (documents[0: steps], i))
+        workers.append(t)
+        t.start()
+        documents = documents[steps:]
 
-            tokenizer = Tokenizer('./AP_DATA/stoplist.txt', 'PorterStemmer')
-            print tokenizer.tokenize(text)
+    # If the number of docs % n is not 0, then process the remaining
+    if len(documents) > 0:
+        t = multiprocessing.Process(target = tokenize_in_batch,
+                args = (documents, n_workers))
+        workers.append(t)
+        t.start()
+    
+    # Wait until it is done
+    for w in workers:
+        w.join()
+    
 
+if __name__ == "__main__":
+    documents = gather_documents(data_dir)
+    run_workers(documents)
