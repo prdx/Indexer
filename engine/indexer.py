@@ -15,7 +15,7 @@ class Indexer(object):
     
     def run(self):
         workers = []
-        n_workers = len(self.documents) / self.steps
+        n_workers = int(len(self.documents) / self.steps)
         for i in range(n_workers):
             t = multiprocessing.Process(target = self.__tokenize_in_batch
                     , args = (self.documents[0: self.steps], i))
@@ -35,12 +35,12 @@ class Indexer(object):
             w.join()
 
     def __tokenize_in_batch(self, docs, counter):
-        print "Worker {0} is running.".format(counter)
+        print("Worker {0} is running.".format(counter))
         tokenized_data = [self.tokenizer.tokenize(doc_id, text) for (doc_id, text) in docs]
         index = self.__merge_tokenized_data(tokenized_data)
         file_id = str(uuid.uuid4().hex)
         self.serializer.marshall_to_temp_objects(index, "temp.{0}.p".format(file_id))
-        print "Worker {0} is done.".format(counter)
+        print("Worker {0} is done.".format(counter))
 
     def __merge_tokenized_data(self, tokenized_data):
         merged_dict = {}

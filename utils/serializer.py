@@ -18,12 +18,12 @@ class Serializer(object):
                     offset = f.tell()
                     meta[term] = [ offset ]
                     inverted_list = index[term]
-                    pickle.dump((term, inverted_list), f)
+                    pickle.dump((term, inverted_list), f, protocol=pickle.HIGHEST_PROTOCOL)
 
             with open(meta_file_path, 'wb') as f:
-                pickle.dump(meta, f)
+                pickle.dump(meta, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        except Exception, e:
+        except Exception as e:
             logging.error(" Failed to saving to pickle.\n" + str(e))
 
     def pickle_to_txt(self):
@@ -33,6 +33,5 @@ class Serializer(object):
                 with open(self.__output_dir + pickle_file, "rb") as p, open(self.__output_dir + pickle_file + ".txt", "w") as t:
                     while True:
                         term, value = pickle.load(p)
-                        t.write(term + "," + json.dumps(value) + "\n")
-            except EOFError:
-                return
+                        t.write(term + " " + json.dumps(value) + "\n")
+            except EOFError: return

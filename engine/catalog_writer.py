@@ -14,7 +14,7 @@ class CatalogWriter(object):
                 c.write(document_tokens["doc_id"] + \
                         "," + str(document_length) + "\n")
         except Exception as exception:
-            print exception
+            print(exception)
                 
 
     def __count_document_length(self, tokens_dict):

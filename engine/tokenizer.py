@@ -1,5 +1,5 @@
 import re
-from stemmer import Stemmer
+from .stemmer import Stemmer
 
 class Tokenizer(object):
     """ Tokenize text
@@ -55,7 +55,7 @@ class Tokenizer(object):
                 with open(stopwords_path, "r") as s:
                     self.__stopwords = s.read().split("\n")
             except Exception as exception:
-                print exception
+                print(exception)
                 
         # If using stemmer
         if stemmer:

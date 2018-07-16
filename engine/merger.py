@@ -12,7 +12,7 @@ class Merger(object):
     def run(self):
         workers = []
         temp_files = [name for name in os.listdir(self.output_dir) if name.startswith("temp") and "meta" not in name]
-        n_workers = len(temp_files) / 2
+        n_workers = int(len(temp_files) / 2)
 
         if len(temp_files) <= 1:
             return 0
@@ -51,7 +51,7 @@ class Merger(object):
                 second_meta = pickle.load(f2)
 
             meta = self.__combine_dicts(first_meta, second_meta)
-            print "total term: {0}".format(len(meta)) 
+            print("total term: {0}".format(len(meta)))
             file_id = str(uuid.uuid4().hex)
             merged_file_path = self.output_dir + "temp.{0}.p".format(
                     file_id)
@@ -65,33 +65,33 @@ class Merger(object):
                     offset = f.tell()
                     inverted_list = []
                     if len(meta[term]) == 2:
-                        with open(first_file_path) as f1:
+                        with open(first_file_path, "rb") as f1:
                             f1.seek(meta[term][0])
                             key, value = pickle.load(f1)
                             inverted_list += value
-                        with open(second_file_path) as f2:
+                        with open(second_file_path, "rb") as f2:
                             f2.seek(meta[term][1])
                             key, value = pickle.load(f2)
                             inverted_list += value
                     elif len(meta[term]) == 1:
                         # If on first file
                         if term in first_meta:
-                            with open(first_file_path) as f1:
+                            with open(first_file_path, "rb") as f1:
                                 f1.seek(meta[term][0])
                                 key, value = pickle.load(f1)
                                 inverted_list += value
                         else:
-                            with open(second_file_path) as f2:
+                            with open(second_file_path, "rb") as f2:
                                 f2.seek(meta[term][0])
                                 key, value = pickle.load(f2)
                                 inverted_list += value
                     merged_meta[term] = [ offset ]
-                    pickle.dump((term, inverted_list), f)
+                    pickle.dump((term, inverted_list), f, protocol=pickle.HIGHEST_PROTOCOL)
 
             with open(merged_file_meta_path, "wb") as f:
-                pickle.dump(merged_meta, f)
+                pickle.dump(merged_meta, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-            print "total term: {0}".format(len(merged_meta)) 
+            print("total term: {0}".format(len(merged_meta)))
             # Remove files
             os.remove(first_file_path)
             os.remove(second_file_path)
@@ -99,10 +99,9 @@ class Merger(object):
             # Remove meta files
             os.remove(first_file_path + ".meta")
             os.remove(second_file_path + ".meta")
-        except Exception, e:
+        except Exception as e:
             raise Exception(e)
 
 
     def __combine_dicts(self, a, b, op = operator.add):
-        return dict(a.items() + b.items() +
-            [(k, op(a[k], b[k])) for k in set(b) & set(a)])
+        return { **a, **b, **{k: op(a[k], b[k]) for k in a.keys() & b}}

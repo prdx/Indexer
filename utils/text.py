@@ -26,7 +26,7 @@ def gather_documents(path):
     documents = []
     for f in os.listdir(path):
         if f.startswith('ap'):
-            with open(path + f, 'r') as d:
+            with open(path + f, 'r', encoding='ISO-8859-1') as d:
                 d = d.read()
                 docs = find_docs_by_regex(d)
 
