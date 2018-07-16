@@ -20,7 +20,7 @@ class Merger(object):
         for i in range(n_workers):
             first_file = self.output_dir + temp_files.pop()
             second_file = self.output_dir + temp_files.pop()
-            t = multiprocessing.Process(target = merge,
+            t = multiprocessing.Process(target = self.__merge,
                     args = (first_file, second_file))
             workers.append(t)
             t.start()
@@ -28,7 +28,7 @@ class Merger(object):
         for w in workers:
             w.join()
         
-        run_merging_workers()
+        self.run()
         return 0
 
     def __merge(self, first_file_path, second_file_path):
@@ -103,6 +103,6 @@ class Merger(object):
             raise Exception(e)
 
 
-def __combine_dicts(self, a, b, op = operator.add):
-    return dict(a.items() + b.items() +
-        [(k, op(a[k], b[k])) for k in set(b) & set(a)])
+    def __combine_dicts(self, a, b, op = operator.add):
+        return dict(a.items() + b.items() +
+            [(k, op(a[k], b[k])) for k in set(b) & set(a)])

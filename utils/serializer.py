@@ -1,5 +1,7 @@
 from utils.config import Config
+import json
 import logging
+import os
 import pickle
 
 class Serializer(object):
@@ -24,3 +26,13 @@ class Serializer(object):
         except Exception, e:
             logging.error(" Failed to saving to pickle.\n" + str(e))
 
+    def pickle_to_txt(self):
+        pickle_files = [name for name in os.listdir(self.__output_dir) if name.endswith(".p") and "meta" not in name]
+        for pickle_file in pickle_files:
+            try:
+                with open(self.__output_dir + pickle_file, "rb") as p, open(self.__output_dir + pickle_file + ".txt", "w") as t:
+                    while True:
+                        term, value = pickle.load(p)
+                        t.write(term + "," + json.dumps(value) + "\n")
+            except EOFError:
+                return

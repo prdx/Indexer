@@ -1,7 +1,10 @@
+from utils.config import Config
 import numpy as np
 
 class CatalogWriter(object):
-    __document_length_catalog = ''
+    config = Config("./settings.yml")
+    catalogs_dir = config.get("catalogs_dir")
+    __document_length_catalog = catalogs_dir + "document_length.txt" 
 
     def write_document_length(self, document_tokens):
         try:
@@ -20,5 +23,3 @@ class CatalogWriter(object):
             document_length += tokens_dict[term]["tf"]
         return document_length
 
-    def __init__(self, catalogs_paths):
-        self.__document_length_catalog = catalogs_paths + "/document_length.txt"
