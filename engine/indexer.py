@@ -1,4 +1,5 @@
 from engine.tokenizer import Tokenizer
+from engine.stats_collector import StatsCollector
 from utils.config import Config
 from utils.serializer import Serializer
 import multiprocessing

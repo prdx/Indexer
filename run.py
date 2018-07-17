@@ -1,4 +1,3 @@
-from engine.catalog_writer import CatalogWriter
 from engine.indexer import Indexer
 from engine.merger import Merger
 from utils.text import gather_documents 

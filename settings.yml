@@ -3,4 +3,4 @@ output_dir: './output/'
 stopwords: './AP_DATA/stoplist.txt'
 stemming: 'PorterStemmer'
 steps: 1000
-catalogs_dir: './catalogs/'
+stats_dir: './stats/'

@@ -1,5 +1,6 @@
 import re
-from .stemmer import Stemmer
+from engine.stemmer import Stemmer
+from engine.stats_collector import StatsCollector
 
 class Tokenizer(object):
     """ Tokenize text
@@ -7,6 +8,7 @@ class Tokenizer(object):
     periods in the middle. For instance, bob and 376 and 98.6 and 192.160.0.1
     are all tokens. 123,456 and aunt"s are not tokens 
     """
+    __stats_collector = StatsCollector()
     __stemmer = None
     __stopwords = []
 
@@ -43,6 +45,7 @@ class Tokenizer(object):
                 "doc_id": doc_id,
                 "tokens": tokens_dict
                 }
+        self.__stats_collector.write_document_length(result)
 
 
         return result
