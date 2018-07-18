@@ -17,19 +17,21 @@ class ProximitySearchModel(object):
         words = keywords.split(' ')
 
         print("Calculating the okapi BM25")
+        print(keywords)
         
         file_list = get_file_list()
         for doc in file_list:
             tf = 0
             for i in range(len(words)):
                 if doc in tf_collection[i]:
-                    tf += self.__bm25(doc, wd_collection[words[i]], tf_collection[i][doc])
-                else:
-                    tf += self.__bm25(doc, wd_collection[words[i]], 0)
+                    tf +=  tf_collection[i][doc]
+
             term_maps = self.__build_term_maps(term_maps_collection, keywords, doc)
             min_span = self.__find_minimum_span(term_maps)
-            print(min_span)
-            result[doc] = self.__phi(min_span) * tf
+            # print(min_span)
+            if min_span == 0:
+                continue
+            result[doc] = (1500 - min_span) * (tf / (self.document_statistics[doc] + self.index_statistics.vocab_size))
             
         return result
     
@@ -89,8 +91,8 @@ class ProximitySearchModel(object):
 
 
         window_index = dict(zip(term_maps.keys(), [0] * len(term_maps))) 
-        print("Window index:")
-        print(window_index)
+        # print("Window index:")
+        # print(window_index)
 
         current_values = self.__build_current_values(term_maps, window_index)
         min_current_key = min(current_values, key=current_values.get)
@@ -98,8 +100,8 @@ class ProximitySearchModel(object):
         minimum_span = current_values[max_current_key] - current_values[min_current_key]
         
 
-        print("Current values:")
-        print(current_values)
+        # print("Current values:")
+        # print(current_values)
 
         while self.__is_window_end(window_index, term_maps) != True:
             # Update the minimum span
