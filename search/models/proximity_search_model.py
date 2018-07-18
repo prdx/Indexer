@@ -5,9 +5,6 @@ from utils.text import *
 
 class ProximitySearchModel(object):
     # Constants
-    k1 = 1.2
-    k2 = 100
-    b = 0.75
     document_statistics = {}
 
     def query(self, keywords, term_maps_collection, wd_collection = [], tf_collection = []):
@@ -16,8 +13,7 @@ class ProximitySearchModel(object):
 
         words = keywords.split(' ')
 
-        print("Calculating the okapi BM25")
-        print(keywords)
+        print("Calculating the Proximity Search")
         
         file_list = get_file_list()
         for doc in file_list:
@@ -35,31 +31,6 @@ class ProximitySearchModel(object):
             
         return result
     
-    def __phi(self, distance):
-        alpha = 1
-        if distance == 0:
-            return 1
-        return np.log(alpha + np.exp(-1.0 * distance))
-
-
-    def __bm25(self, doc_no = '', df_w = 0, tf_wd = 0):
-        """
-        """
-        D = self.index_statistics.doc_count
-        doc_length = self.document_statistics[doc_no]
-        avg_doc_length = self.index_statistics.avg_doc_length
-        d = doc_length / float(avg_doc_length)
-
-        first_term = (D + 0.5) / (df_w + 0.5)
-        first_term = np.log(first_term)
-
-        second_term_numerator = tf_wd + self.k1 * tf_wd
-        second_term_denominator = tf_wd + self.k1 * ((1 - self.b) + self.b * d)
-        second_term = second_term_numerator / second_term_denominator
-
-        # We consider the tf_wq = 1, thus we can ignore the third term
-        
-        return first_term * second_term
 
     def __build_term_maps(self, term_maps_collection, keywords, doc_id):
         term_maps = {}
@@ -79,8 +50,6 @@ class ProximitySearchModel(object):
                 continue
             term_maps[word] = word_position[doc_id]
         return term_maps
-
-
 
     def __find_minimum_span(self, term_maps):
         # term_maps = {
