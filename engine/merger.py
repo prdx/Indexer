@@ -2,6 +2,7 @@ from utils.config import Config
 import multiprocessing
 import os
 import operator
+from pathlib import Path
 import pickle
 import uuid
 
@@ -12,15 +13,15 @@ class Merger(object):
     def run(self):
         print("Merging ...")
         workers = []
-        temp_files = [name for name in os.listdir(self.output_dir) if name.startswith("temp") and "meta" not in name]
+        temp_files = [name for name in os.listdir(self.output_dir) if name.endswith(".p") and "meta" not in name]
         n_workers = int(len(temp_files) / 2)
 
         if len(temp_files) <= 1:
             return 0
         
         for i in range(n_workers):
-            first_file = self.output_dir + temp_files.pop()
-            second_file = self.output_dir + temp_files.pop()
+            first_file = temp_files.pop()
+            second_file = temp_files.pop()
             t = multiprocessing.Process(target = self.__merge,
                     args = (first_file, second_file))
             workers.append(t)
@@ -32,17 +33,13 @@ class Merger(object):
         self.run()
         return 0
 
-    def __merge(self, first_file_path, second_file_path):
+    def __merge(self, first_file, second_file):
         # Merge the meta files
         try:
             meta = {}
-
-            # Pattern "temp.number.p"
-            # FIXME: Not general
-            first_file_id = first_file_path.split("/")[2]
-            second_file_id = second_file_path.split("/")[2]
-            first_file_id  = first_file_id.split(".")[1]
-            second_file_id  = second_file_id.split(".")[1]
+            
+            first_file_path = self.output_dir + first_file
+            second_file_path = self.output_dir + second_file
 
             first_meta = {}
             second_meta = {}
@@ -52,10 +49,13 @@ class Merger(object):
                 second_meta = pickle.load(f2)
 
             meta = self.__combine_dicts(first_meta, second_meta)
+            
+            # Generate new name for merged file
             file_id = str(uuid.uuid4().hex)
-            merged_file_path = self.output_dir + "temp.{0}.p".format(
-                    file_id)
-            merged_file_meta_path = self.output_dir + "temp.{0}.p".format(
+            
+            # Generate the path
+            merged_file_path = self.output_dir + "{0}.p".format(file_id)
+            merged_file_meta_path = self.output_dir + "{0}.p".format(
                     file_id) + ".meta"
 
             merged_meta = {}
@@ -92,12 +92,11 @@ class Merger(object):
                 pickle.dump(merged_meta, f, protocol=pickle.HIGHEST_PROTOCOL)
 
             # Remove files
-            os.remove(first_file_path)
-            os.remove(second_file_path)
+            for p in Path(self.output_dir).glob(first_file + "*"):
+                p.unlink()
+            for p in Path(self.output_dir).glob(second_file + "*"):
+                p.unlink()
 
-            # Remove meta files
-            os.remove(first_file_path + ".meta")
-            os.remove(second_file_path + ".meta")
         except Exception as e:
             raise Exception(e)
 
