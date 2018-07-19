@@ -10,6 +10,7 @@ class Merger(object):
     output_dir = config.get("output_dir")
 
     def run(self):
+        print("Merging ...")
         workers = []
         temp_files = [name for name in os.listdir(self.output_dir) if name.startswith("temp") and "meta" not in name]
         n_workers = int(len(temp_files) / 2)
@@ -51,7 +52,6 @@ class Merger(object):
                 second_meta = pickle.load(f2)
 
             meta = self.__combine_dicts(first_meta, second_meta)
-            print("total term: {0}".format(len(meta)))
             file_id = str(uuid.uuid4().hex)
             merged_file_path = self.output_dir + "temp.{0}.p".format(
                     file_id)
@@ -91,7 +91,6 @@ class Merger(object):
             with open(merged_file_meta_path, "wb") as f:
                 pickle.dump(merged_meta, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-            print("total term: {0}".format(len(merged_meta)))
             # Remove files
             os.remove(first_file_path)
             os.remove(second_file_path)

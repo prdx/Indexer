@@ -3,7 +3,6 @@ from engine.stats_collector import StatsCollector
 from utils.config import Config
 from utils.serializer import Serializer
 import multiprocessing
-import uuid
 
 class Indexer(object):
     config = Config("./settings.yml")
@@ -15,6 +14,7 @@ class Indexer(object):
     tokenizer = None
     
     def run(self):
+        print("Tokenizing ...")
         workers = []
         n_workers = int(len(self.documents) / self.steps)
         for i in range(n_workers):
@@ -36,12 +36,9 @@ class Indexer(object):
             w.join()
 
     def __tokenize_in_batch(self, docs, counter):
-        print("Worker {0} is running.".format(counter))
         tokenized_data = [self.tokenizer.tokenize(doc_id, text) for (doc_id, text) in docs]
         index = self.__merge_tokenized_data(tokenized_data)
-        file_id = str(uuid.uuid4().hex)
-        self.serializer.marshall_to_temp_objects(index, "temp.{0}.p".format(file_id))
-        print("Worker {0} is done.".format(counter))
+        self.serializer.marshall_to_temp_objects(index)
 
     def __merge_tokenized_data(self, tokenized_data):
         merged_dict = {}

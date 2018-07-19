@@ -12,7 +12,6 @@ class StatsCollector(object):
         with open(filename, "a") as c:
             document_length = self.__count_document_length(
                     document_tokens["tokens"])
-            print(document_length)
             c.write(document_tokens["doc_id"] + \
                     "," + str(document_length) + "\n")
                 

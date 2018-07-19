@@ -3,12 +3,14 @@ import json
 import logging
 import os
 import pickle
+import uuid
 
 class Serializer(object):
     config = Config("./settings.yml")
     __output_dir = config.get("output_dir")
 
-    def marshall_to_temp_objects(self, index, file_name):
+    def marshall_to_temp_objects(self, index):
+        file_name = str(uuid.uuid4().hex) + ".p"
         file_path = self.__output_dir + file_name
         meta_file_path = self.__output_dir + file_name + ".meta"
         meta = {}
@@ -33,5 +35,6 @@ class Serializer(object):
                 with open(self.__output_dir + pickle_file, "rb") as p, open(self.__output_dir + pickle_file + ".txt", "w") as t:
                     while True:
                         term, value = pickle.load(p)
+                        print(value)
                         t.write(term + " " + json.dumps(value) + "\n")
             except EOFError: return

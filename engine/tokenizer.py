@@ -16,37 +16,37 @@ class Tokenizer(object):
 
     def tokenize(self, doc_id, text):
         # Lower case all the body
-        tokens = text.lower()
-        tokens = [ match.group() for match in re.finditer(self.__pattern, tokens, re.M | re.I) ]
+        text = text.lower()
+        regex = re.compile(self.__pattern, re.IGNORECASE | re.MULTILINE)
 
-        # Give ID to the word and remove stopwords
+        tokens = []
+        for match in regex.finditer(text):
+            tokens.append(match.group())
+
+        # Remove stopwords
         tokens = [ token for token in tokens if token not in self.__stopwords ]
 
         # If stemmed
         if self.__stemmer and self.__stemmer.method:
             tokens = [ self.__stemmer.stem(token) for token in tokens ]
 
-        indexed_tokens = [(index + 1, word) for index, word in enumerate(tokens)]
-        # unique = 1
+        tokens = [(index + 1, word) for index, word in enumerate(tokens)]
         tokens_dict = {}
-        for pos, term in indexed_tokens:
-            if term not in tokens_dict:
+        for pos, term in tokens:
+            try:
+                tokens_dict[term]["tf"] += 1
+                tokens_dict[term]["positions"].append(pos)
+            except KeyError:
                 tokens_dict[term] = { 
                         "tf": 1,
                         "positions": [pos],
-                        # "unique": unique
                         }
-                # unique += 1
-            else:
-                tokens_dict[term]["tf"] += 1
-                tokens_dict[term]["positions"].append(pos)
-        
+
         result = {
                 "doc_id": doc_id,
                 "tokens": tokens_dict
                 }
         self.__stats_collector.write_document_length(result)
-
 
         return result
 
