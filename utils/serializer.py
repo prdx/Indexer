@@ -35,6 +35,13 @@ class Serializer(object):
                 with open(self.__output_dir + pickle_file, "rb") as p, open(self.__output_dir + pickle_file + ".txt", "w") as t:
                     while True:
                         term, value = pickle.load(p)
-                        print(value)
-                        t.write(term + " " + json.dumps(value) + "\n")
+                        string = term + ":"
+                        for v in value:
+                            string += str(v[0]) + "," + str(v[1]) 
+                            # position
+                            for pos in v[2]:
+                                string += "," + str(pos)
+                            string += "|"
+                            
+                        t.write(string + "\n")
             except EOFError: return
