@@ -122,6 +122,27 @@ def build_query_list():
     except Exception as exception:
         print(exception)
 
+def build_query_list_for_prox_search():
+    key_val = []
+    query_list = {}
+    try:
+        f = open(Constants.QUERY_LIST_PATH_FOR_PS, 'r').read()
+        f = remove_punctuation(f)
+        f = f.split('\n')
+
+        for q in f:
+            key_val = re.split('\s{3}', q.strip())
+            if len(key_val) == 2:
+                key_val[1] = remove_stopwords(key_val[1])
+                query_list[key_val[0]] = key_val[1]
+
+        for key in query_list:
+            query_list[key] = stem_sentence(query_list[key]) 
+
+        return query_list
+
+    except Exception as exception:
+        print(exception)
 
 def write_output(model, query_no, doc_no, rank, score):
     try:

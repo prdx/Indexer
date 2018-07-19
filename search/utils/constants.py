@@ -9,3 +9,4 @@ class Constants:
     RESULTS_PATH = './results/'
     STOPWORDS_PATH = './AP_DATA/stoplist.txt'
     QUERY_LIST_PATH = './AP_DATA/query_desc.51-100.short.txt'
+    QUERY_LIST_PATH_FOR_PS = './AP_DATA/query_desc.51-100.short.ps.txt'
