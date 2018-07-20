@@ -114,8 +114,9 @@ def build_query_list():
                 key_val[1] = remove_stopwords(key_val[1])
                 query_list[key_val[0]] = key_val[1]
 
-        for key in query_list:
-            query_list[key] = stem_sentence(query_list[key]) 
+        if Constants.USE_STEMMING:
+            for key in query_list:
+                query_list[key] = stem_sentence(query_list[key]) 
 
         return query_list
 
