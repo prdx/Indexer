@@ -4,10 +4,12 @@ import logging
 import os
 import pickle
 import uuid
+import gzip
 
 class Serializer(object):
     config = Config("./settings.yml")
     __output_dir = config.get("output_dir")
+    __stats_dir = config.get("stats_dir")
 
     def marshall_to_temp_objects(self, index):
         file_name = str(uuid.uuid4().hex) + ".p"
@@ -45,3 +47,62 @@ class Serializer(object):
                             
                         t.write(string + "\n")
             except EOFError: return
+
+    # FIXME: Bad design
+    def generate_doc_id(self):
+        doc_dict = {}
+        with open(self.__stats_dir + "document_length.txt", "r") as stats:
+            data = stats.read()
+            data = data.split("\n")
+            sum_ttf = 0
+            doc_id = 1
+            for d in data:
+                doc_stats = d.split(",")
+                try:
+                    doc_dict[doc_stats[0]] = doc_id
+                    doc_id += 1
+                except IndexError:
+                    break
+
+        with open(self.__output_dir + "document_map", 'wb') as f:
+            pickle.dump(doc_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+            
+        return doc_dict
+
+
+    def wrap_up(self):
+        pickle_file = [name for name in os.listdir(self.__output_dir) if name.endswith(".p") and "meta" not in name]
+        pickle_file = pickle_file[0]
+        meta = {}
+        final_file = open(self.__output_dir + "index", "wb")
+        final_meta_file = open(self.__output_dir + "index.meta", "wb")
+        term_id = 1
+
+        doc_map = self.generate_doc_id()
+
+        try:
+            with open(self.__output_dir + pickle_file, "rb") as p:
+                while True:
+                    term, value = pickle.load(p)
+                    string = ""
+                    for v in value:
+                        string += str(doc_map[v[0]]) + "," + str(v[1]) + ":"
+                        # position
+                        for i in range(len(v[2])):
+                            string += str(v[2][i])
+                            if i < len(v[2]) - 1:
+                                string += ","
+
+                        string += ";"
+                    string_byte = bytes(string, "utf-8")
+                    current_pos = final_file.tell()
+                    string_length = len(string.encode())
+                    meta[term] = [term_id, current_pos, string_length]
+                    final_file.write(string.encode())
+                    term_id += 1
+        except EOFError: 
+            final_file.close()
+            pickle.dump(meta, final_meta_file, protocol=pickle.HIGHEST_PROTOCOL)
+            final_meta_file.close()
+
+

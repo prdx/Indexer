@@ -9,6 +9,7 @@ import os
 import threading
 import numpy as np
 import pickle
+import gzip
 import pprint
 from collections import ChainMap
 
@@ -20,6 +21,7 @@ query_list = {}
 query_list_for_ps = {}
 total_length = 0
 term_maps_collection = {}
+doc_map = {}
 
 tf_idf_result = {}
 laplace_result = {}
@@ -217,7 +219,7 @@ def clean_results_folder():
         os.remove(Constants.RESULTS_PATH + result_file)
 
 def build_tf_for_queries():
-    with open("./index/index.p.meta", "rb") as c:
+    with open("./index/index.meta", "rb") as c:
         catalog = pickle.load(c)
     print("Collecting the tf values")
     for q_no in query_list:
@@ -225,13 +227,16 @@ def build_tf_for_queries():
         tf_collection  = []
         words = query.split(' ')
         for word in words:
-            with open("./index/index.p", "rb") as i:
+            with open("./index/index", "r") as i:
                 if word in catalog:
-                    i.seek(catalog[word][0])
-                    data = pickle.load(i)
+                    i.seek(catalog[word][1])
+                    length = catalog[word][2]
+                    data = i.read(length)
+                    data = convert_text(str(data))
+
                     temp_tf = {}
                     temp_pos = {}
-                    for d in data[1]:
+                    for d in data:
                         # d[0]: document id, d[1]: ttf
                         temp_tf[d[0]] = d[1]
                         temp_pos[d[0]] = d[2]
@@ -242,8 +247,29 @@ def build_tf_for_queries():
             tf_collection.append(temp_tf)
         tf_for_queries[q_no] = tf_collection
 
+def convert_text(string):
+    data = string.split(";")
+    doc_id = ""
+    tf = 0
+    pos = []
+    original_data = []
+    for d in data:
+        if len(d) > 0:
+            doc_id_tf_pos = d.split(":")
+            doc_id_tf = doc_id_tf_pos[0].split(",")
+            doc_id = int(doc_id_tf[0])
+            tf = int(doc_id_tf[1])
+            doc_id = doc_map[doc_id]
+            pos = doc_id_tf_pos[1].split(",")
+            original_data.append((doc_id, tf, pos))
+    print(original_data)
+    return original_data
+
+def switch_doc_map(dictionary):
+    return {y:x for x,y in dictionary.items()}
+
 def build_term_maps_for_queries():
-    with open("./index/index.p.meta", "rb") as c:
+    with open("./index/index.meta", "rb") as c:
         catalog = pickle.load(c)
     print("Collecting the tf values")
     for q_no in query_list_for_ps:
@@ -251,13 +277,16 @@ def build_term_maps_for_queries():
         tf_collection  = []
         words = query.split(' ')
         for word in words:
-            with open("./index/index.p", "rb") as i:
+            with open("./index/index", "r") as i:
                 if word in catalog:
-                    i.seek(catalog[word][0])
-                    data = pickle.load(i)
+                    i.seek(catalog[word][1])
+                    length = catalog[word][2]
+                    data = i.read(length)
+                    data = convert_text(str(data))
+
                     temp_tf = {}
                     temp_pos = {}
-                    for d in data[1]:
+                    for d in data:
                         # d[0]: document id, d[1]: ttf
                         temp_tf[d[0]] = d[1]
                         temp_pos[d[0]] = d[2]
@@ -281,6 +310,9 @@ def build_total_tf_wd(q_no):
 if __name__ == '__main__':
     """Main function
     """
+    with open("./index/document_map", "rb") as d:
+        document_map = pickle.load(d)
+    doc_map = switch_doc_map(document_map)
     clean_results_folder()
     query_list = build_query_list()
     query_list_for_ps = build_query_list_for_prox_search()
